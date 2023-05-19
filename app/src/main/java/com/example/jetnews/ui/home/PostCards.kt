@@ -33,28 +33,26 @@ import com.example.jetnews.R
 import com.example.jetnews.BookmarkButton
 
 @Composable
-fun PostCardSimple(post: Post, navigateToArticle: (String) -> Unit, isFavorite: Boolean, toggleFavorite: () -> Unit) {
+fun PostCardSimple(post: Post, navigateToPost: (String) -> Unit, isFavorite: Boolean, toggleFavorite: () -> Unit) {
     val bookmarkAction = stringResource(if (isFavorite) R.string.unbookmark else R.string.bookmark)
     Row(
         modifier = Modifier
-            .clickable(onClick = { navigateToArticle(post.id) })
+            .clickable(onClick = { navigateToPost(post.id) })
             .semantics {
-                // By defining a custom action, we tell accessibility services that this whole
-                // composable has an action attached to it. The accessibility service can choose
-                // how to best communicate this action to the user.
                 customActions = listOf(
                     CustomAccessibilityAction(
                         label = bookmarkAction,
-                        action = { toggleFavorite(); true }
+                        action = {
+                            toggleFavorite()
+                            true
+                        }
                     )
                 )
             },
         content = {
             PostImage(post, Modifier.padding(16.dp))
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 10.dp),
+                modifier = Modifier.weight(1f).padding(vertical = 10.dp),
                 content = {
                     PostTitle(post)
                     AuthorAndReadTime(post)
@@ -72,10 +70,10 @@ fun PostCardSimple(post: Post, navigateToArticle: (String) -> Unit, isFavorite: 
 }
 
 @Composable
-fun PostCardHistory(post: Post, navigateToArticle: (String) -> Unit) {
-    var openDialog: Boolean by remember { mutableStateOf(false) }
+fun PostCardHistory(post: Post, navigateToPost: (String) -> Unit) {
+    var isDialogVisible: Boolean by remember { mutableStateOf(false) }
 
-    Row(Modifier.clickable(onClick = { navigateToArticle(post.id) })) {
+    Row(Modifier.clickable(onClick = { navigateToPost(post.id) })) {
         PostImage(post, Modifier.padding(16.dp))
         Column(
             Modifier.weight(1f).padding(vertical = 12.dp)) {
@@ -83,14 +81,14 @@ fun PostCardHistory(post: Post, navigateToArticle: (String) -> Unit) {
             PostTitle(post)
             AuthorAndReadTime(post, Modifier.padding(top = 4.dp))
         }
-        IconButton(onClick = { openDialog = true }) {
+        IconButton(onClick = { isDialogVisible = true }) {
             Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.cd_more_actions))
         }
     }
-    if (openDialog) {
+    if (isDialogVisible) {
         AlertDialog(
             modifier = Modifier.padding(20.dp),
-            onDismissRequest = { openDialog = false },
+            onDismissRequest = { isDialogVisible = false },
             title = {
                 Text(stringResource(R.string.fewer_stories), style = MaterialTheme.typography.titleLarge)
             },
@@ -102,7 +100,7 @@ fun PostCardHistory(post: Post, navigateToArticle: (String) -> Unit) {
                     text = stringResource(R.string.agree),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(15.dp).clickable { openDialog = false }
+                    modifier = Modifier.padding(15.dp).clickable { isDialogVisible = false }
                 )
             }
         )
@@ -113,10 +111,8 @@ fun PostCardHistory(post: Post, navigateToArticle: (String) -> Unit) {
 private fun PostImage(post: Post, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(post.imageThumb),
-        contentDescription = null, // decorative
-        modifier = modifier
-            .size(40.dp, 40.dp)
-            .clip(MaterialTheme.shapes.small)
+        contentDescription = null,
+        modifier = modifier.size(40.dp, 40.dp).clip(MaterialTheme.shapes.small)
     )
 }
 

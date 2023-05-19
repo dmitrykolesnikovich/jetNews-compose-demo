@@ -1,19 +1,24 @@
 package com.example.jetnews.ui.article
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarState
@@ -24,10 +29,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.example.jetnews.AppTopBar
+import androidx.compose.ui.unit.dp
 import com.example.jetnews.BookmarkButton
 import com.example.jetnews.FavoriteButton
 import com.example.jetnews.FunctionalityNotAvailablePopup
@@ -90,7 +97,12 @@ fun ArticleScreen(
 
 @ExperimentalMaterial3Api
 @Composable
-private fun ArticleScreenContent(post: Post, icon: @Composable () -> Unit, bottomBar: @Composable () -> Unit, listState: LazyListState = rememberLazyListState()) {
+private fun ArticleScreenContent(
+    post: Post,
+    icon: @Composable () -> Unit,
+    bottomBar: @Composable () -> Unit,
+    listState: LazyListState = rememberLazyListState()
+) {
     val topBarState: TopAppBarState = rememberTopAppBarState()
     val scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topBarState)
 
@@ -100,7 +112,41 @@ private fun ArticleScreenContent(post: Post, icon: @Composable () -> Unit, botto
         },
         bottomBar = bottomBar,
         content = { paddings ->
-            PostLayout(post, Modifier.nestedScroll(scrollBehavior.nestedScrollConnection).padding(paddings), listState)
+            PostLayout(post,
+                Modifier
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+                    .padding(paddings), listState)
         }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTopBar(
+    title: String,
+    icon: @Composable () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior?,
+    modifier: Modifier = Modifier,
+) {
+    CenterAlignedTopAppBar(
+        title = {
+            Row {
+                Image(
+                    painter = painterResource(id = R.drawable.icon_article_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(36.dp)
+                )
+                Text(
+                    text = stringResource(R.string.published_in, title),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        },
+        navigationIcon = icon,
+        scrollBehavior = scrollBehavior,
+        modifier = modifier
     )
 }

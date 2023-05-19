@@ -1,20 +1,16 @@
 package com.example.jetnews.widget
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.action.Action
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
@@ -27,11 +23,10 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.Text
-import com.example.jetnews.applicationUri
-import com.example.jetnews.MainActivity
 import com.example.jetnews.Post
 import com.example.jetnews.R
 import com.example.jetnews.authorReadTimeString
+import com.example.jetnews.openPost
 
 enum class PostLayoutType {
     HORIZONTAL_SMALL,
@@ -59,7 +54,7 @@ fun PostLayout(post: Post, bookmarks: Set<String>, toggleBookmark: (String) -> U
 @Composable
 fun HorizontalPost(post: Post, bookmarks: Set<String>, toggleBookmark: (String) -> Unit, modifier: GlanceModifier, showThumbnail: Boolean) {
     val context: Context = LocalContext.current
-    Row(modifier.clickable(onClick = openPostDetails(context, post)), verticalAlignment = Alignment.Vertical.CenterVertically) {
+    Row(modifier.clickable(onClick = openPost(post, context)), verticalAlignment = Alignment.Vertical.CenterVertically) {
         if (showThumbnail) {
             PostImage(image = post.imageThumb, modifier = GlanceModifier.size(80.dp), contentScale = ContentScale.Fit)
         } else {
@@ -81,13 +76,16 @@ fun HorizontalPost(post: Post, bookmarks: Set<String>, toggleBookmark: (String) 
 @Composable
 fun VerticalPost(post: Post, bookmarks: Set<String>, toggleBookmark: (String) -> Unit, modifier: GlanceModifier) {
     val context: Context = LocalContext.current
-    Column(modifier.clickable(onClick = openPostDetails(context, post)), verticalAlignment = Alignment.Vertical.CenterVertically) {
+    Column(modifier.clickable(onClick = openPost(post, context)), verticalAlignment = Alignment.Vertical.CenterVertically) {
         PostImage(image = post.image, modifier = GlanceModifier.fillMaxWidth())
         Spacer(GlanceModifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             PostDescription(
                 title = post.title,
-                metadata = context.authorReadTimeString(author = post.metadata.author.name, readTimeMinutes = post.metadata.readTimeMinutes),
+                metadata = context.authorReadTimeString(
+                    author = post.metadata.author.name,
+                    readTimeMinutes = post.metadata.readTimeMinutes
+                ),
                 modifier = GlanceModifier.defaultWeight()
             )
             Spacer(modifier = GlanceModifier.width(10.dp))
@@ -123,10 +121,4 @@ fun PostDescription(title: String, metadata: String, modifier: GlanceModifier) {
         Spacer(modifier = GlanceModifier.height(4.dp))
         Text(metadata, style = AppWidgetTheme.bodySmall.copy(color = GlanceTheme.colors.onBackground))
     }
-}
-
-/*internals*/
-
-private fun openPostDetails(context: Context, post: Post): Action {
-    return actionStartActivity(Intent(Intent.ACTION_VIEW, "$applicationUri/home?postId=${post.id}".toUri(), context, MainActivity::class.java))
 }

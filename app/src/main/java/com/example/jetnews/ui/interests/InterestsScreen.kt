@@ -61,6 +61,7 @@ import com.example.jetnews.Tab
 import com.example.jetnews.TopicSelection
 import com.example.jetnews.tabContainerModifier
 import com.example.jetnews.AdaptiveLayout
+import com.example.jetnews.submitSearchFromTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +92,7 @@ fun InterestsScreen(tabs: List<Tab>, currentSection: Section, isScreenExpanded: 
                 actions = {
                     IconButton(
                         onClick = {
-                            Toast.makeText(context, "Search is not yet implemented in this configuration", Toast.LENGTH_LONG).show()
+                            submitSearchFromTopBar(context)
                         },
                         content = {
                             Icon(imageVector = Icons.Filled.Search, contentDescription = stringResource(R.string.cd_search))

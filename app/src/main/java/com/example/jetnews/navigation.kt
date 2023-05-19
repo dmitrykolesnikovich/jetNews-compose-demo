@@ -92,7 +92,7 @@ fun AppNavigation(context: MainContext, widthSizeClass: WindowWidthSizeClass) = 
 @Composable
 private fun AppNavigationHost(context: MainContext, startDestination: String, isScreenExpanded: Boolean, modifier: Modifier = Modifier, openDrawer: () -> Unit = {}) {
     NavHost(context.navController, startDestination, modifier) {
-        composable("home", deepLinks = listOf(navDeepLink { uriPattern = "$applicationUri/home?postId={postId}" })) { entry ->
+        composable("home", deepLinks = listOf(navDeepLink { uriPattern = openPostDeepLink })) { entry ->
             val selectedPostId: String? = entry.arguments?.getString("postId")
             val model: HomeModel = viewModel(factory = HomeModel.provideFactory(context.postsRepository, selectedPostId))
             HomeRoute(model, isScreenExpanded, openDrawer)

@@ -6,10 +6,10 @@ val publication: Publication = Publication("Android Developers", "https://cdn-im
 
 /*authors*/
 
-val pietro: PostAuthor = PostAuthor("Pietro Maggi", "https://medium.com/@pmaggi")
-val manuel: PostAuthor = PostAuthor("Manuel Vivo", "https://medium.com/@manuelvicnt")
-val florina: PostAuthor = PostAuthor("Florina Muntenescu", "https://medium.com/@florina.muntenescu")
-val jose: PostAuthor = PostAuthor("Jose Alcérreca", "https://medium.com/@JoseAlcerreca")
+val pietro: Author = Author("Pietro Maggi", "https://medium.com/@pmaggi")
+val manuel: Author = Author("Manuel Vivo", "https://medium.com/@manuelvicnt")
+val florina: Author = Author("Florina Muntenescu", "https://medium.com/@florina.muntenescu")
+val jose: Author = Author("Jose Alcérreca", "https://medium.com/@JoseAlcerreca")
 
 /*paragraphs*/
 

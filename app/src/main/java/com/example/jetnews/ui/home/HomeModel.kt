@@ -8,9 +8,9 @@ import com.example.jetnews.ErrorMessage
 import com.example.jetnews.HomeScreenType
 import com.example.jetnews.Post
 import com.example.jetnews.PostFeed
+import com.example.jetnews.PostsRepository
 import com.example.jetnews.R
 import com.example.jetnews.Result
-import com.example.jetnews.PostsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -29,17 +29,16 @@ sealed interface HomeState {
         override val isLoading: Boolean,
         override val errorMessages: List<ErrorMessage>,
         override val searchInput: String,
-    ) :
-        HomeState
+    ) : HomeState
 
     data class WithPosts(
         val postFeed: PostFeed,
-        val selectedPost: Post,
         val isArticleOpen: Boolean,
         val favorites: Set<String>,
         override val isLoading: Boolean,
         override val errorMessages: List<ErrorMessage>,
         override val searchInput: String,
+        val selectedPost: Post,
     ) : HomeState
 
 }
@@ -58,15 +57,8 @@ private data class HomeStateInternal(
         if (postFeed == null) {
             return HomeState.WithoutPosts(isLoading, errorMessages, searchInput)
         } else {
-            return HomeState.WithPosts(
-                postFeed = postFeed,
-                selectedPost = postFeed.allPosts.find { it.id == selectedPostId } ?: postFeed.highlighted,
-                isArticleOpen = isArticleOpen,
-                favorites = favorites,
-                isLoading = isLoading,
-                errorMessages = errorMessages,
-                searchInput = searchInput
-            )
+            val selectedPost: Post = postFeed.allPosts.find { it.id == selectedPostId } ?: postFeed.highlighted
+            return HomeState.WithPosts(postFeed, isArticleOpen, favorites, isLoading, errorMessages, searchInput, selectedPost)
         }
     }
 
@@ -74,15 +66,15 @@ private data class HomeStateInternal(
 
 class HomeModel(private val repository: PostsRepository, selectedPostId: String?) : ViewModel() {
 
-    private val flow = MutableStateFlow(HomeStateInternal(isLoading = true, selectedPostId = selectedPostId, isArticleOpen = selectedPostId != null))
-    val state = flow.map(HomeStateInternal::toState).stateIn(viewModelScope, SharingStarted.Eagerly, flow.value.toState())
+    private val _flow = MutableStateFlow(HomeStateInternal(isLoading = true, selectedPostId = selectedPostId, isArticleOpen = selectedPostId != null))
+    val flow = _flow.map(HomeStateInternal::toState).stateIn(viewModelScope, SharingStarted.Eagerly, _flow.value.toState())
 
     init {
         updatePosts()
 
         viewModelScope.launch {
             repository.observeFavorites().collect { favorites ->
-                flow.update { state ->
+                _flow.update { state ->
                     state.copy(favorites = favorites)
                 }
             }
@@ -90,13 +82,13 @@ class HomeModel(private val repository: PostsRepository, selectedPostId: String?
     }
 
     fun updatePosts() {
-        flow.update { state ->
+        _flow.update { state ->
             state.copy(isLoading = true)
         }
 
         viewModelScope.launch {
             val postFeedResult: Result<PostFeed> = repository.getPostsFeed()
-            flow.update { state ->
+            _flow.update { state ->
                 when (postFeedResult) {
                     is Result.Success -> state.copy(postFeed = postFeedResult.data, isLoading = false)
                     is Result.Error -> state.copy(
@@ -119,28 +111,28 @@ class HomeModel(private val repository: PostsRepository, selectedPostId: String?
         interactedWithArticleDetails(postId)
     }
 
-    fun errorShown(errorId: Long) = flow.update { state ->
+    fun errorShown(errorId: Long) = _flow.update { state ->
         state.copy(errorMessages = state.errorMessages.filterNot { it.id == errorId })
     }
 
-    fun interactedWithFeed() = flow.update { state ->
+    fun interactedWithFeed() = _flow.update { state ->
         state.copy(isArticleOpen = false)
     }
 
-    fun interactedWithArticleDetails(postId: String) = flow.update { state ->
+    fun interactedWithArticleDetails(postId: String) = _flow.update { state ->
         state.copy(selectedPostId = postId, isArticleOpen = true)
     }
 
-    fun changeSearchInput(searchInput: String) = flow.update { state ->
+    fun changeSearchInput(searchInput: String) = _flow.update { state ->
         state.copy(searchInput = searchInput)
     }
 
     companion object {
-        fun provideFactory(repository: PostsRepository, postId: String? = null): ViewModelProvider.Factory =
+        fun provideFactory(repository: PostsRepository, selectedPostId: String?): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return HomeModel(repository, postId) as T
+                    return HomeModel(repository, selectedPostId) as T
                 }
             }
     }
@@ -150,8 +142,8 @@ class HomeModel(private val repository: PostsRepository, selectedPostId: String?
 /*convenience*/
 
 @Composable
-fun HomeState.homeScreenType(isExpandedScreen: Boolean): HomeScreenType {
-    if (isExpandedScreen) {
+fun HomeState.homeScreenType(isScreenExpanded: Boolean): HomeScreenType {
+    if (isScreenExpanded) {
         return HomeScreenType.FeedWithArticleDetails
     } else {
         when (this) {
@@ -175,6 +167,7 @@ fun HomeState.allPosts(): List<Post> {
         is HomeState.WithPosts -> {
             return postFeed.allPosts
         }
+
         is HomeState.WithoutPosts -> {
             return emptyList()
         }

@@ -3,6 +3,7 @@ package com.example.jetnews
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,7 +45,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.glance.GlanceModifier
+import androidx.glance.action.Action
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.background
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
@@ -54,9 +58,9 @@ import com.example.jetnews.widget.AppWidgetTheme
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 
-const val applicationUri: String = "https://developer.android.com/jetnews"
-
-val tabContainerModifier: Modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+val tabContainerModifier: Modifier = Modifier
+    .fillMaxWidth()
+    .wrapContentWidth(Alignment.CenterHorizontally)
 
 val defaultSpacerSize: Dp = 16.dp
 
@@ -67,68 +71,40 @@ sealed class Result<out R> {
     data class Error(val exception: Exception) : Result<Nothing>()
 }
 
+/*convenience*/
+
 fun <T> Result<T>.successOr(fallback: T): T {
     return (this as? Result.Success<T>)?.data ?: fallback
-}
-
-// Determine the content padding to apply to the different screens of the app
-@Composable
-fun rememberContentPaddingForScreen(additionalTop: Dp = 0.dp, excludeTop: Boolean = false): PaddingValues {
-    return WindowInsets.systemBars
-        .only(if (excludeTop) WindowInsetsSides.Bottom else WindowInsetsSides.Vertical)
-        .add(WindowInsets(top = additionalTop))
-        .asPaddingValues()
 }
 
 val LazyListState.isScrolled: Boolean
     get() = derivedStateOf { firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > 0 }.value
 
-internal fun <E> Set<E>.addOrRemove(element: E): Set<E> {
-    return this.toMutableSet().apply {
-        if (!add(element)) {
-            remove(element)
-        }
-    }.toSet()
+fun <E> Set<E>.addOrRemove(element: E): Set<E> {
+    val mutableSet: MutableSet<E> = toMutableSet()
+    if (!mutableSet.add(element)) {
+        mutableSet.remove(element)
+    }
+    return mutableSet.toSet()
 }
 
-// https://d.android.com/jetpack/compose/tooling#preview-multipreview
+/*multipreview*/ // https://d.android.com/jetpack/compose/tooling#preview-multipreview
 
-// extra small and extra large font size
 @Preview(name = "small font", group = "font scales", fontScale = 0.5f)
 @Preview(name = "large font", group = "font scales", fontScale = 1.5f)
-annotation class FontScalePreviews
+annotation class FontScalePreviews // extra small and extra large font size
 
-// various device sizes: phone, foldable, and tablet.
 @Preview(name = "phone", group = "devices", device = "spec:shape=Normal,width=360,height=640,unit=dp,dpi=480")
 @Preview(name = "foldable", group = "devices", device = "spec:shape=Normal,width=673,height=841,unit=dp,dpi=480")
 @Preview(name = "tablet", group = "devices", device = "spec:shape=Normal,width=1280,height=800,unit=dp,dpi=480")
-annotation class DevicePreviews
+annotation class DevicePreviews // various device sizes: phone, foldable, and tablet.
 
-// various common configurations: Dark theme, Small and large font size, various device sizes
 @Preview(name = "dark theme", group = "themes", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @FontScalePreviews
 @DevicePreviews
-annotation class CompletePreviews
+annotation class CompletePreviews // various common configurations: Dark theme, Small and large font size, various device sizes
 
-// drawer state to pass to the modal drawer.
-@Composable
-fun rememberSizeAwareDrawerState(isScreenExpanded: Boolean): DrawerState {
-    val state: DrawerState = rememberDrawerState(DrawerValue.Closed)
-    return if (!isScreenExpanded) {
-        state // if we want to allow showing the drawer, we use a real, remembered drawer state defined above
-    } else {
-        DrawerState(DrawerValue.Closed)
-    }
-}
-
-fun sharePost(post: Post, context: Context) {
-    val shareIntent: Intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TITLE, post.title)
-        putExtra(Intent.EXTRA_TEXT, post.url)
-    }
-    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.article_share_post)))
-}
+/*modifier*/
 
 fun Modifier.interceptKey(key: Key, onKeyEvent: () -> Unit): Modifier {
     return onPreviewKeyEvent { keyEvent: KeyEvent ->
@@ -150,6 +126,28 @@ fun Modifier.notifyInput(block: () -> Unit): Modifier = composed {
                 blockState.value()
             }
         }
+    }
+}
+
+/*compose*/
+
+// padding to apply to the different screens of the app
+@Composable
+fun rememberContentPaddingForScreen(additionalTop: Dp = 0.dp, excludeTop: Boolean = false): PaddingValues {
+    return WindowInsets.systemBars
+        .only(if (excludeTop) WindowInsetsSides.Bottom else WindowInsetsSides.Vertical)
+        .add(WindowInsets(top = additionalTop))
+        .asPaddingValues()
+}
+
+// drawer state to pass to the modal drawer.
+@Composable
+fun rememberSizeAwareDrawerState(isScreenExpanded: Boolean): DrawerState {
+    val state: DrawerState = rememberDrawerState(DrawerValue.Closed)
+    if (!isScreenExpanded) {
+        return state // if we want to allow showing the drawer, we use a real, remembered drawer state defined above
+    } else {
+        return DrawerState(DrawerValue.Closed)
     }
 }
 
@@ -182,4 +180,35 @@ fun FunctionalityNotAvailablePopup(dismiss: () -> Unit) {
             }
         }
     )
+}
+
+/*search*/
+
+fun submitSearch(changeSearchInput: (String) -> Unit, context: Context) {
+    changeSearchInput("")
+    Toast.makeText(context, "Search is not yet implemented", Toast.LENGTH_SHORT).show()
+}
+
+fun submitSearchFromTopBar(context: Context) {
+    Toast.makeText(context, "Search is not yet implemented in this configuration", Toast.LENGTH_LONG).show()
+}
+
+/*post*/
+
+private const val applicationUri: String = "https://developer.android.com/jetnews"
+
+const val openPostDeepLink: String = "$applicationUri/home?postId={postId}"
+
+fun openPost(post: Post, context: Context): Action {
+    val activityClass: Class<MainActivity> = MainActivity::class.java
+    return actionStartActivity(Intent(Intent.ACTION_VIEW, "$applicationUri/home?postId=${post.id}".toUri(), context, activityClass))
+}
+
+fun sharePost(post: Post, context: Context) {
+    val shareIntent: Intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TITLE, post.title)
+        putExtra(Intent.EXTRA_TEXT, post.url)
+    }
+    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.article_share_post)))
 }

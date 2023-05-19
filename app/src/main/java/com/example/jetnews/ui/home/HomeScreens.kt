@@ -3,7 +3,6 @@
 package com.example.jetnews.ui.home
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -78,6 +77,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.jetnews.AppTheme
 import com.example.jetnews.BookmarkButton
 import com.example.jetnews.ErrorMessage
 import com.example.jetnews.FavoriteButton
@@ -93,6 +93,8 @@ import com.example.jetnews.interceptKey
 import com.example.jetnews.notifyInput
 import com.example.jetnews.rememberContentPaddingForScreen
 import com.example.jetnews.sharePost
+import com.example.jetnews.submitSearch
+import com.example.jetnews.submitSearchFromTopBar
 import com.example.jetnews.ui.article.postContentItems
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -129,9 +131,9 @@ fun HomeFeedWithArticleDetailsScreen(
                     postsFeed = stateWithPosts.postFeed,
                     favorites = stateWithPosts.favorites,
                     showExpandedSearch = !showTopBar,
-                    navigateToArticle = selectPost,
+                    navigateToPost = selectPost,
                     onToggleFavorite = toggleFavourite,
-                    paggings = paddings,
+                    paddings = paddings,
                     modifier = Modifier
                         .width(334.dp)
                         .notifyInput(interactedWithFeed),
@@ -207,9 +209,9 @@ fun HomeFeedScreen(
                 postsFeed = hasPostsUiState.postFeed,
                 favorites = hasPostsUiState.favorites,
                 showExpandedSearch = !showTopAppBar,
-                navigateToArticle = onSelectPost,
+                navigateToPost = onSelectPost,
                 onToggleFavorite = onToggleFavorite,
-                paggings = rememberContentPaddingForScreen(
+                paddings = rememberContentPaddingForScreen(
                     additionalTop = if (showTopAppBar) 0.dp else 8.dp,
                     excludeTop = showTopAppBar
                 ),
@@ -242,12 +244,14 @@ private fun HomeScreenWithList(
         },
         topBar = {
             if (showTopBar) {
-                HomeTopAppBar(openDrawer, topBarState)
+                HomeTopBar(openDrawer, topBarState)
             }
         },
         modifier = modifier,
         content = { paddings ->
-            val contentModifier: Modifier = Modifier.padding(paddings).nestedScroll(scrollBehavior.nestedScrollConnection)
+            val contentModifier: Modifier = Modifier
+                .padding(paddings)
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
 
             LoadingLayout(
                 isEmpty = when (state) {
@@ -315,90 +319,76 @@ private fun PostList(
     postsFeed: PostFeed,
     favorites: Set<String>,
     showExpandedSearch: Boolean,
-    navigateToArticle: (postId: String) -> Unit,
+    navigateToPost: (postId: String) -> Unit,
     onToggleFavorite: (String) -> Unit,
     modifier: Modifier = Modifier,
-    paggings: PaddingValues = PaddingValues(0.dp),
+    paddings: PaddingValues = PaddingValues(0.dp),
     state: LazyListState = rememberLazyListState(),
     searchInput: String = "",
     changeSearchInput: (String) -> Unit,
 ) {
-    LazyColumn(modifier, state, paggings) {
+    LazyColumn(modifier, state, paddings) {
         if (showExpandedSearch) {
             item {
                 HomeSearch(Modifier.padding(horizontal = 16.dp), searchInput = searchInput, changeSearchInput = changeSearchInput)
             }
         }
         item {
-            PostListTopSection(postsFeed.highlighted, navigateToArticle)
+            PostListTopSection(postsFeed.highlighted, navigateToPost)
         }
         if (postsFeed.recommended.isNotEmpty()) {
             item {
-                PostListSimpleSection(postsFeed.recommended, navigateToArticle, favorites, onToggleFavorite)
+                PostListSimpleSection(postsFeed.recommended, navigateToPost, favorites, onToggleFavorite)
             }
         }
         if (postsFeed.populars.isNotEmpty() && !showExpandedSearch) {
             item {
-                PostListPopularSection(postsFeed.populars, navigateToArticle)
+                PostListPopularSection(postsFeed.populars, navigateToPost)
             }
         }
         if (postsFeed.recents.isNotEmpty()) {
             item {
-                PostListHistorySection(postsFeed.recents, navigateToArticle)
+                PostListHistorySection(postsFeed.recents, navigateToPost)
             }
         }
     }
 }
 
 @Composable
-private fun PostListTopSection(post: Post, navigateToArticle: (String) -> Unit) {
+private fun PostListTopSection(post: Post, navigateToPost: (String) -> Unit) {
     Text(
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
         text = stringResource(R.string.home_top_section_title),
         style = MaterialTheme.typography.titleMedium
     )
-    PostCardTop(post, modifier = Modifier.clickable(onClick = { navigateToArticle(post.id) }))
+    PostCardTop(post, modifier = Modifier.clickable(onClick = { navigateToPost(post.id) }))
     PostListDivider()
 }
 
 @Composable
 fun PostCardTop(post: Post, modifier: Modifier = Modifier) {
-    Column(
-        modifier
-            .fillMaxWidth()
-            .padding(16.dp)) {
+    Column(modifier.fillMaxWidth().padding(16.dp)) {
         Image(
             painter = painterResource(post.image),
             contentDescription = null, // decorative
-            modifier = Modifier
-                .heightIn(min = 180.dp)
-                .fillMaxWidth()
-                .clip(shape = MaterialTheme.shapes.medium),
+            modifier = Modifier.heightIn(min = 180.dp).fillMaxWidth().clip(shape = MaterialTheme.shapes.medium),
             contentScale = ContentScale.Crop
         )
         Spacer(Modifier.height(16.dp))
         Text(post.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 8.dp))
         Text(post.metadata.author.name, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(bottom = 4.dp))
-        Text(
-            stringResource(R.string.home_post_min_read, post.metadata.date, post.metadata.readTimeMinutes),
-            style = MaterialTheme.typography.bodySmall
-        )
+        Text(stringResource(R.string.home_post_min_read, post.metadata.date, post.metadata.readTimeMinutes), style = AppTheme.typography.bodySmall)
     }
 }
 
 
 @Composable
-fun PostListSimpleSection(
-    posts: List<Post>,
-    navigateToArticle: (String) -> Unit,
-    favorites: Set<String>,
-    toggleFavorite: (String) -> Unit
-) {
+fun PostListSimpleSection(posts: List<Post>, navigateToPost: (String) -> Unit, favorites: Set<String>, toggleFavorite: (String) -> Unit) {
     Column {
         for (post in posts) {
             PostCardSimple(
                 post,
-                navigateToArticle = navigateToArticle,
+                navigateToPost = navigateToPost,
                 isFavorite = favorites.contains(post.id),
                 toggleFavorite = { toggleFavorite(post.id) })
             PostListDivider()
@@ -407,7 +397,7 @@ fun PostListSimpleSection(
 }
 
 @Composable
-private fun PostListPopularSection(posts: List<Post>, navigateToArticle: (String) -> Unit) {
+private fun PostListPopularSection(posts: List<Post>, navigateToPost: (String) -> Unit) {
     Column {
         Text(
             modifier = Modifier.padding(16.dp),
@@ -416,7 +406,7 @@ private fun PostListPopularSection(posts: List<Post>, navigateToArticle: (String
         )
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(posts) { post ->
-                PostCardPopular(post, navigateToArticle)
+                PostCardPopular(post, navigateToPost)
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -427,9 +417,9 @@ private fun PostListPopularSection(posts: List<Post>, navigateToArticle: (String
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostCardPopular(post: Post, navigateToArticle: (String) -> Unit, modifier: Modifier = Modifier) {
+fun PostCardPopular(post: Post, navigateToPost: (String) -> Unit, modifier: Modifier = Modifier) {
     Card(
-        onClick = { navigateToArticle(post.id) },
+        onClick = { navigateToPost(post.id) },
         shape = MaterialTheme.shapes.medium,
         modifier = modifier.size(280.dp, 240.dp),
         content = {
@@ -438,9 +428,7 @@ fun PostCardPopular(post: Post, navigateToArticle: (String) -> Unit, modifier: M
                     painter = painterResource(post.image),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(100.dp)
-                        .fillMaxWidth()
+                    modifier = Modifier.height(100.dp).fillMaxWidth()
                 )
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(post.title, style = MaterialTheme.typography.headlineSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -461,10 +449,10 @@ fun PostCardPopular(post: Post, navigateToArticle: (String) -> Unit, modifier: M
 }
 
 @Composable
-private fun PostListHistorySection(posts: List<Post>, navigateToArticle: (String) -> Unit) {
+private fun PostListHistorySection(posts: List<Post>, navigateToPost: (String) -> Unit) {
     Column {
         for (post in posts) {
-            PostCardHistory(post, navigateToArticle)
+            PostCardHistory(post, navigateToPost)
             PostListDivider()
         }
     }
@@ -505,11 +493,6 @@ private fun HomeSearch(modifier: Modifier = Modifier, searchInput: String = "", 
     )
 }
 
-private fun submitSearch(changeSearchInput: (String) -> Unit, context: Context) {
-    changeSearchInput("")
-    Toast.makeText(context, "Search is not yet implemented", Toast.LENGTH_SHORT).show()
-}
-
 @Composable
 private fun PostTopBar(isFavorite: Boolean, toggleFavorite: () -> Unit, sharePost: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
@@ -528,7 +511,7 @@ private fun PostTopBar(isFavorite: Boolean, toggleFavorite: () -> Unit, sharePos
 }
 
 @Composable
-private fun HomeTopAppBar(openDrawer: () -> Unit, topBarState: TopAppBarState, modifier: Modifier = Modifier) {
+private fun HomeTopBar(openDrawer: () -> Unit, topBarState: TopAppBarState, modifier: Modifier = Modifier) {
     val context: Context = LocalContext.current
     val scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topBarState)
     val title: String = stringResource(R.string.app_name)
@@ -555,7 +538,7 @@ private fun HomeTopAppBar(openDrawer: () -> Unit, topBarState: TopAppBarState, m
         actions = {
             IconButton(
                 onClick = {
-                    Toast.makeText(context, "Search is not yet implemented in this configuration", Toast.LENGTH_LONG).show()
+                    submitSearchFromTopBar(context)
                 },
                 content = {
                     Icon(imageVector = Icons.Filled.Search, contentDescription = stringResource(R.string.cd_search))

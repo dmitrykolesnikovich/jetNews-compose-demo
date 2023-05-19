@@ -14,7 +14,7 @@ import com.example.jetnews.ui.article.ArticleScreen
 
 @Composable
 fun HomeRoute(model: HomeModel, isScreenExpanded: Boolean, openDrawer: () -> Unit) {
-    val state: HomeState by model.state.collectAsStateWithLifecycle()
+    val state: HomeState by model.flow.collectAsStateWithLifecycle()
     val hostState: SnackbarHostState = remember { SnackbarHostState() }
 
     val listState: LazyListState = rememberLazyListState()

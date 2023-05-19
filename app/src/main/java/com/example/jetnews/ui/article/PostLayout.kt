@@ -199,7 +199,7 @@ private fun paragraphToAnnotatedString(paragraph: Paragraph, typography: Typogra
     return AnnotatedString(paragraph.text, spanStyles = paragraph.markups.map { it.toAnnotatedStringItem(typography, codeBlockBackground) })
 }
 
-fun Markup.toAnnotatedStringItem(typography: Typography, codeBlockBackground: Color): AnnotatedString.Range<SpanStyle> = when (type) {
+private fun Markup.toAnnotatedStringItem(typography: Typography, codeBlockBackground: Color): AnnotatedString.Range<SpanStyle> = when (type) {
     MarkupType.Italic -> {
         AnnotatedString.Range(typography.bodyLarge.copy(fontStyle = FontStyle.Italic).toSpanStyle(), start, end)
     }

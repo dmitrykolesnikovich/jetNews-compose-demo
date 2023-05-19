@@ -13,12 +13,6 @@ enum class HomeScreenType {
     ArticleDetails
 }
 
-enum class Section(@StringRes val titleResId: Int) {
-    Topics(R.string.interests_section_topics),
-    People(R.string.interests_section_people),
-    Publications(R.string.interests_section_publications)
-}
-
 enum class MarkupType {
     Link,
     Code,
@@ -37,12 +31,17 @@ enum class ParagraphType {
     Bullet,
 }
 
-class Tab(val section: Section, val content: @Composable () -> Unit)
+enum class Section(@StringRes val titleResId: Int) {
+    Topics(R.string.interests_section_topics),
+    People(R.string.interests_section_people),
+    Publications(R.string.interests_section_publications)
+}
 
+class Tab(val section: Section, val content: @Composable () -> Unit)
 data class InterestSection(val title: String, val interests: List<String>)
 data class TopicSelection(val section: String, val topic: String)
-data class Metadata(val author: PostAuthor, val date: String, val readTimeMinutes: Int)
-data class PostAuthor(val name: String, val url: String? = null)
+data class Metadata(val author: Author, val date: String, val readTimeMinutes: Int)
+data class Author(val name: String, val url: String? = null)
 data class Publication(val name: String, val logoUrl: String)
 data class Paragraph(val type: ParagraphType, val text: String, val markups: List<Markup> = emptyList())
 data class Markup(val type: MarkupType, val start: Int, val end: Int, val href: String? = null)
@@ -64,4 +63,3 @@ data class Post(
 )
 
 data class ParagraphStyling(val textStyle: TextStyle, val paragraphStyle: ParagraphStyle, val trailingPadding: Dp)
-

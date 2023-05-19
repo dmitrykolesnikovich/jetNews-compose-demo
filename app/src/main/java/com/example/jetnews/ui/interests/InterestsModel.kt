@@ -32,7 +32,7 @@ class InterestsModel(private val repository: InterestsRepository) : ViewModel() 
     val selectedPublicationsFlow: StateFlow<Set<String>> = repository.observePublicationSelected().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     init {
-        refreshAll()
+        updateInterests()
     }
 
     fun toggleTopicSelection(topic: TopicSelection) = viewModelScope.launch {
@@ -47,7 +47,7 @@ class InterestsModel(private val repository: InterestsRepository) : ViewModel() 
         repository.togglePublicationSelected(publication)
     }
 
-    private fun refreshAll() {
+    private fun updateInterests() {
         flow.update {
             it.copy(loading = true)
         }

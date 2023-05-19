@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier, snackbar: @Composable (SnackbarData) -> Unit = { Snackbar(it) }) {
-    SnackbarHost(hostState, modifier.systemBarsPadding().wrapContentWidth(align = Alignment.Start).widthIn(max = 550.dp), snackbar)
+fun SnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(hostState, modifier.systemBarsPadding().wrapContentWidth(align = Alignment.Start).widthIn(max = 550.dp)) { snackbarData ->
+        Snackbar(snackbarData)
+    }
 }
