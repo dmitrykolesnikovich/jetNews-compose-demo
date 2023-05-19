@@ -9,10 +9,6 @@ You can clone this repository or import the
 project from Android Studio following the steps
 [here](https://developer.android.com/jetpack/compose/setup#sample).
 
-## Screenshots
-
-<img src="screenshots/screenshots.png" alt="Screenshot">
-
 ## Features
 
 This sample contains three screens: a list of articles, a detail page for articles, and a page to
@@ -100,8 +96,6 @@ UI tests can be run on device/emulators or on JVM with Robolectric.
 * To run tests with Robolectric use the "Robolectric tests" run configuration or run the `./gradlew testDebug` command.
 
 ## Jetnews for every screen
-
-<img src="screenshots/jetnews_all_screens.png" alt="Screenshot">
 
 We recently updated Jetnews to enhance its behavior across all mobile devices, both big and small.
 Jetnews already had support for “traditional” mobile screens, so it was tempting to describe all of
